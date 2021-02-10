@@ -1,0 +1,4 @@
+torch
+torchtext
+git+https://github.com/samiroid/user2vec_torch.git
+git+https://github.com/samiroid/TADAT.git
