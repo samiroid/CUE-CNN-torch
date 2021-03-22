@@ -3,8 +3,9 @@ import os
 import random
 import tarfile
 import urllib
-from torchtext import data
-
+from torchtext.legacy import data
+from torchtext import vocab
+import pandas as pd
 
 class TarDataset(data.Dataset):
     """Defines a Dataset loaded from a downloadable tar archive.
@@ -40,7 +41,7 @@ class MR(TarDataset):
     def sort_key(ex):
         return len(ex.text)
 
-    def __init__(self, text_field, label_field, path=None, examples=None, **kwargs):
+    def __init__(self, text_field, label_field, user_field, args = None, path=None, examples=None, **kwargs):
         """Create an MR dataset instance given a path and fields.
 
         Arguments:
@@ -72,21 +73,43 @@ class MR(TarDataset):
             return string.strip()
 
         text_field.tokenize = lambda x: clean_str(x).split()
-        fields = [('text', text_field), ('label', label_field)]
+        fields = [('text', text_field), ('label', label_field),('user', user_field)]
+        # fields = [('label', label_field), ('text', text_field)]
 
         if examples is None:
             path = self.dirname if path is None else path
             examples = []
-            with open(os.path.join(path, 'rt-polarity.neg'), errors='ignore') as f:
-                examples += [
-                    data.Example.fromlist([line, 'negative'], fields) for line in f]
-            with open(os.path.join(path, 'rt-polarity.pos'), errors='ignore') as f:
-                examples += [
-                    data.Example.fromlist([line, 'positive'], fields) for line in f]
+            
+            # f = pd.read_csv('data_twitter_sentiment/semeval_train.txt',sep='\t',names=["sentiment","tweet"])
+            f = pd.read_csv('sarcasm dataset/experiment.csv')
+            # examples += [
+            #     data.Example.fromlist([b['tweet'], b['sentiment']], fields) for a,b in f.iterrows()]
+            # f = pd.read_csv('data_twitter_sentiment/Twitter2013_raw.txt',sep='\t',names=["sentiment","tweet"])
+            # examples += [
+            #     data.Example.fromlist([b['tweet'], b['sentiment']], fields) for a,b in f.iterrows()]
+            
+            examples += [
+                data.Example.fromlist([b['tweet_text'], b['sarcasm_score'], b['author_full_name']], fields) for a,b in f.iterrows()]
+            if args.pretrained_embed_words:
+                args.custom_embed = vocab.Vectors(name = 'sarcasm dataset/word_embeddings.txt')
+                # print(args.custom_embed[3][1])
+            if args.pretrained_embed_users:
+                args.custom_embed_u = vocab.Vectors(name = 'sarcasm dataset/user_embeddings.txt')
+                # args.custom_embed = vocab.Vectors(name = 'sarcasm dataset/word.txt')
+            # examples += [
+            #     data.Example.fromlist([line, 'positive'], fields) for l in f]
+              # print(examples[0])
+            # with open(os.path.join(path, 'rt-polarity.neg'), errors='ignore') as f:
+            #     examples += [
+            #         data.Example.fromlist([line, 'negative'], fields) for line in f]
+            
+            # with open(os.path.join(path, 'rt-polarity.pos'), errors='ignore') as f:
+            #     examples += [
+            #         data.Example.fromlist([line, 'positive'], fields) for line in f]
         super(MR, self).__init__(examples, fields, **kwargs)
 
     @classmethod
-    def splits(cls, text_field, label_field, dev_ratio=.1, shuffle=True, root='.', **kwargs):
+    def splits(cls, text_field, label_field, user_field, test_ratio=.2, shuffle=True, root='.', **kwargs):
         """Create dataset objects for splits of the MR dataset.
 
         Arguments:
@@ -101,10 +124,17 @@ class MR(TarDataset):
             Remaining keyword arguments: Passed to the splits method of
                 Dataset.
         """
-        path = cls.download_or_unzip(root)
-        examples = cls(text_field, label_field, path=path, **kwargs).examples
-        if shuffle: random.shuffle(examples)
-        dev_index = -1 * int(dev_ratio*len(examples))
+        # path = cls.download_or_unzip(root)
+        path = 'data_twitter_sentiment/'
+        examples = cls(text_field, label_field, user_field, path=path, **kwargs).examples
+        # if shuffle: random.shuffle(examples)
+        test_index = int((1-test_ratio)*len(examples)) #0.8
+        random.shuffle(examples[:test_index]) # shuffle train data before train - val split
+        dev_index = int(0.8*len(examples[:test_index]))
+        # f = pd.read_csv('data_twitter_sentiment/semeval_train.txt',sep='\t',names=["sentiment","tweet"])
+        # dev_index = len(f)
+        # print(len(examples[:dev_index]))
 
-        return (cls(text_field, label_field, examples=examples[:dev_index]),
-                cls(text_field, label_field, examples=examples[dev_index:]))
+        return (cls(text_field, label_field, user_field, examples=examples[:dev_index]),
+                cls(text_field, label_field, user_field, examples=examples[dev_index:test_index]),
+                cls(text_field, label_field, user_field, examples=examples[test_index:]))
