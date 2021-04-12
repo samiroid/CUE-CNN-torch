@@ -33,7 +33,7 @@ parser.add_argument('-embed-dim', type=int, default=128, help='number of embeddi
 parser.add_argument('-kernel-num', type=int, default=60, help='number of each kind of kernel')
 parser.add_argument('-kernel-sizes', type=str, default='2,3,4,5,6,7', help='comma-separated kernel size to use for convolution')
 parser.add_argument('-static', action='store_true', default=False, help='fix the embedding')
-parser.add_argument('-pretrained-embed-words', type=bool, default=True, help='Use pre-trained embedding for words')
+parser.add_argument('-pretrained-embed-words', type=bool, default=False, help='Use pre-trained embedding for words')
 parser.add_argument('-pretrained-embed-users', type=bool, default=True, help='Use pre-trained embedding for users')
 # device
 parser.add_argument('-device', type=int, default=-1, help='device to use for iterate data, -1 mean cpu [default: -1]')
@@ -56,6 +56,7 @@ def mr(text_field, label_field, user_field, **kargs):
     else:
         text_field.build_vocab(train_data, dev_data, test_data)
     if args.pretrained_embed_users:
+        print(torch.sum(torch.sum(args.custom_embed_u.vectors,1)!=0))
         user_field.build_vocab(train_data, dev_data, test_data, vectors = args.custom_embed_u)
     else:
         user_field.build_vocab(train_data, dev_data, test_data)
@@ -75,13 +76,14 @@ def mr(text_field, label_field, user_field, **kargs):
 print("\nLoading data...")
 text_field = data.Field(lower=True)
 label_field = data.Field(sequential=False)
-user_field = data.Field()
+user_field = data.Field(sequential=False)
 train_iter, dev_iter, test_iter = mr(text_field, label_field, user_field, device='cpu', repeat=False)
 
 # update args and print
 words_vec = text_field.vocab.vectors
 users_vec = user_field.vocab.vectors
-print(torch.sum(torch.sum(users_vec,1)==0))
+# print(user_field.vocab.value)
+print(torch.sum(torch.sum(users_vec,1)!=0))
 args.embed_num = len(text_field.vocab)
 args.class_num = len(label_field.vocab) - 1
 args.embed_num_users = len(user_field.vocab)

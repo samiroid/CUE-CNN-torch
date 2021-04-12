@@ -16,8 +16,8 @@ import numpy as np
 random.seed(42)
 
 parser = argparse.ArgumentParser(description='CNN hyper parameter tuning')
-parser.add_argument('-pretrained-embed-words', type=bool, default=False, help='Use pre-trained embedding for words')
-parser.add_argument('-pretrained-embed-users', type=bool, default=True, help='Use pre-trained embedding for users')
+parser.add_argument('-pretrained-embed-words', type=bool, default=True, help='Use pre-trained embedding for words')
+parser.add_argument('-pretrained-embed-users', type=bool, default=False, help='Use pre-trained embedding for users')
 parser.add_argument('-shuffle', action='store_true', default=False, help='shuffle the data every epoch')
 # model
 parser.add_argument('-static', action='store_true', default=False, help='fix the embedding')
@@ -34,16 +34,12 @@ args = parser.parse_args()
 
 
 p = {
-      # 'lr':torch.linspace(1e-5,1e-3,10), 
-      'lr': [0.001],
-      'dropout':np.round(np.linspace(0.3,0.6,5),3), 
-      # 'dropout':[0.5],
-      'max_norm':np.round(np.logspace(-3,-1,5),4),
-      # 'max_norm': [0.001],
+      'lr': [0.001, 0.01],
+      'dropout':[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6], 
+      'max_norm':[0.003, 0.001, 0.0006, 0.0003, 0.0001],
       'kernel_num':np.linspace(40,100,61),
-      # 'kernel_num': [50],
       'kernel_size':['2,3,4','5,6,7','8,9,10','11,12,13','14,15,16','2,4,6','3,5,7'],
-      'conv_layer':np.linspace(50,200,76)
+      'conv_layer':np.linspace(50,200, 31)
       }
 
 best_score = {'Train Accuracy': 0, 'Validation Accuracy': 0}
@@ -76,8 +72,8 @@ def mr(text_field, label_field, user_field, **kargs):
     return train_iter, dev_iter, test_iter
 
 
-with open('results_1.txt', 'w') as filehandle:
-    filehandle.writelines("CNN with pre-trained user embeddings and not-pretrained word embeddings\n")
+with open('results_4.txt', 'w') as filehandle:
+    filehandle.writelines("CNN with not pretrained user embeddings and pretrained word embeddings\n")
     # filehandle.writelines("%s " % attr for attr,_ in best_score.items())
     filehandle.writelines("Tr_acc ")
     filehandle.writelines("Val_acc ")
@@ -87,9 +83,9 @@ with open('results_1.txt', 'w') as filehandle:
     for i_dict in p_list[:100]:
         # learning
         lr = float(i_dict['lr'])
-        epochs = 40
+        epochs = 10
         log_interval = 1
-        test_interval = 30
+        test_interval = 20
         save_interval = 500
         save_dir = 'snapshot'
         early_stop = 100
@@ -120,6 +116,7 @@ with open('results_1.txt', 'w') as filehandle:
         # update args and print
         words_vec = text_field.vocab.vectors
         users_vec = user_field.vocab.vectors
+        # print(users_vec)
         emb_num = len(text_field.vocab)
         class_num = len(label_field.vocab) - 1
         emb_num_u = len(user_field.vocab)

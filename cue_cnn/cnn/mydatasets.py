@@ -87,14 +87,15 @@ class MR(TarDataset):
             # f = pd.read_csv('data_twitter_sentiment/Twitter2013_raw.txt',sep='\t',names=["sentiment","tweet"])
             # examples += [
             #     data.Example.fromlist([b['tweet'], b['sentiment']], fields) for a,b in f.iterrows()]
-            
+            # print([b['tweet_text'] for _,b in f.iterrows])
             examples += [
                 data.Example.fromlist([b['tweet_text'], b['sarcasm_score'], b['author_full_name']], fields) for a,b in f.iterrows()]
             if args.pretrained_embed_words:
-                args.custom_embed = vocab.Vectors(name = 'sarcasm dataset/word_embeddings.txt')
+                args.custom_embed = vocab.Vectors(name = 'sarcasm dataset/word_embeddings.txt', max_vectors = 100000)
                 # print(args.custom_embed[3][1])
             if args.pretrained_embed_users:
-                args.custom_embed_u = vocab.Vectors(name = 'sarcasm dataset/user_embeddings.txt')
+                # print("ok")
+                args.custom_embed_u = vocab.Vectors(name = 'sarcasm dataset/user_embeddings.txt', max_vectors = 8000)
                 # args.custom_embed = vocab.Vectors(name = 'sarcasm dataset/word.txt')
             # examples += [
             #     data.Example.fromlist([line, 'positive'], fields) for l in f]
