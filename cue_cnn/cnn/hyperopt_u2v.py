@@ -163,13 +163,13 @@ with open(b_dir+'Sarcasm/results/u2v_param_tuning.txt', 'w') as filehandle:
         filehandle.writelines("\n")
         filehandle.writelines("%s " % round(float(tr_acc),2))
         filehandle.writelines("%s " % round(float(dev_acc),2))
-        filehandle.writelines("%s " % val for val in fname.split('/')[-1].split('_')[1:])
+        filehandle.writelines("%s " % val for val in fname.split('/')[-1].split('_')[2:])
         
     filehandle.writelines('\n\n' + '-' * 89)
     filehandle.writelines("\n Best set of hyper parameters\n")
     filehandle.writelines("lr margin min_word_freq min_docs_user neg_samples")    
     filehandle.writelines("\n")
-    filehandle.writelines(" %s"% val for val in f_best.split('/')[-1].split('_')[1:])
+    filehandle.writelines(" %s"% val for val in f_best.split('/')[-1].split('_')[2:])
 
     filehandle.writelines("\n Train Accuracy is %s " % round(float(best_score['Train Accuracy']),2))
     filehandle.writelines("\n Validation Accuracy is %s " % round(float(best_score['Validation Accuracy']),2))
