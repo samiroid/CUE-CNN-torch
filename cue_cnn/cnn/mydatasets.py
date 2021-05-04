@@ -1,9 +1,13 @@
+b_dir = '/home/a.wrat/'
+# b_dir = ''
 import re
 import os
 import random
 import tarfile
 import urllib
 from torchtext.legacy import data
+import torchtext.datasets as datasets
+# import torchtext.data as data
 from torchtext import vocab
 import pandas as pd
 
@@ -81,7 +85,7 @@ class MR(TarDataset):
             examples = []
             
             # f = pd.read_csv('data_twitter_sentiment/semeval_train.txt',sep='\t',names=["sentiment","tweet"])
-            f = pd.read_csv('sarcasm dataset/experiment.csv')
+            f = pd.read_csv(b_dir+'Sarcasm/sarcasm dataset/experiment.csv')
             # examples += [
             #     data.Example.fromlist([b['tweet'], b['sentiment']], fields) for a,b in f.iterrows()]
             # f = pd.read_csv('data_twitter_sentiment/Twitter2013_raw.txt',sep='\t',names=["sentiment","tweet"])
@@ -90,13 +94,7 @@ class MR(TarDataset):
             # print([b['tweet_text'] for _,b in f.iterrows])
             examples += [
                 data.Example.fromlist([b['tweet_text'], b['sarcasm_score'], b['author_full_name']], fields) for a,b in f.iterrows()]
-            if args.pretrained_embed_words:
-                args.custom_embed = vocab.Vectors(name = 'sarcasm dataset/word_embeddings.txt', max_vectors = 100000)
                 # print(args.custom_embed[3][1])
-            if args.pretrained_embed_users:
-                # print("ok")
-                args.custom_embed_u = vocab.Vectors(name = 'sarcasm dataset/user_embeddings.txt', max_vectors = 8000)
-                # args.custom_embed = vocab.Vectors(name = 'sarcasm dataset/word.txt')
             # examples += [
             #     data.Example.fromlist([line, 'positive'], fields) for l in f]
               # print(examples[0])

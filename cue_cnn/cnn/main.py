@@ -47,7 +47,7 @@ parser.add_argument('-param-search', type=bool, default=False, help='Tuning hype
 parser.add_argument('-conv-layer', type=int, default=100, help='Hidden layer of the last convolution layer')
 args = parser.parse_args()
 
-# load MR dataset
+# load Sarcasm dataset
 def mr(text_field, label_field, user_field, **kargs):
     train_data, dev_data, test_data = mydatasets.MR.splits(text_field, label_field, user_field, args = args)
     
@@ -57,7 +57,8 @@ def mr(text_field, label_field, user_field, **kargs):
         text_field.build_vocab(train_data, dev_data, test_data)
     if args.pretrained_embed_users:
         print(torch.sum(torch.sum(args.custom_embed_u.vectors,1)!=0))
-        user_field.build_vocab(train_data, dev_data, test_data, vectors = args.custom_embed_u)
+        custom_embed_u = vocab.Vectors(name = 'sarcasm dataset/user_embeddings.txt', max_vectors = 8000)
+        user_field.build_vocab(train_data, dev_data, test_data, vectors = custom_embed_u)
     else:
         user_field.build_vocab(train_data, dev_data, test_data)
 

@@ -58,7 +58,8 @@ def mr(text_field, label_field, user_field, **kargs):
     else:
         text_field.build_vocab(train_data, dev_data, test_data)
     if args.pretrained_embed_users:
-        user_field.build_vocab(train_data, dev_data, test_data, vectors = args.custom_embed_u)
+        custom_embed_u = vocab.Vectors(name = 'sarcasm dataset/user_embeddings.txt', max_vectors = 8000)
+        user_field.build_vocab(train_data, dev_data, test_data, vectors =  custom_embed_u)
     else:
         user_field.build_vocab(train_data, dev_data, test_data)
     label_field.build_vocab(train_data, dev_data, test_data)
