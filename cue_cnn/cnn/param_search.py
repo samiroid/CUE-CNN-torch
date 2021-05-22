@@ -7,6 +7,7 @@ import torchtext.datasets as datasets
 import model
 import train
 import mydatasets
+from dataloader import dataloader
 import pandas as pd
 import random
 
@@ -16,8 +17,12 @@ import numpy as np
 random.seed(42)
 
 parser = argparse.ArgumentParser(description='CNN hyper parameter tuning')
-parser.add_argument('-pretrained-embed-words', type=bool, default=True, help='Use pre-trained embedding for words')
-parser.add_argument('-pretrained-embed-users', type=bool, default=False, help='Use pre-trained embedding for users')
+parser.add_argument('-output', type=str, default="output.txt", help='The directory for saving the results [default: output.txt]')
+parser.add_argument('-data', type=str, default='Sarcasm/sarcasm dataset/experiment.csv', help='Dataset Directory')
+parser.add_argument('-pretrained-embed-words', type=bool, default=False, help='Use pre-trained embedding for words [default: False]')
+parser.add_argument('-pretrained-embed-users', type=bool, default=False, help='Use pre-trained embedding for users [default: False]')
+parser.add_argument('-emb-words', type=str, default='Sarcasm/sarcasm dataset/word_embeddings.txt' , help='Directory of pretrained word embeddings')
+parser.add_argument('-emb-users', type=str, default='sarcasm dataset/user_embeddings.txt', help='Directory of pretrained user embeddings')
 parser.add_argument('-shuffle', action='store_true', default=False, help='shuffle the data every epoch')
 # model
 parser.add_argument('-static', action='store_true', default=False, help='fix the embedding')
@@ -50,35 +55,34 @@ random.shuffle(p_list)
 
 
 # load MR dataset
-def mr(text_field, label_field, user_field, **kargs):
-    train_data, dev_data, test_data = mydatasets.MR.splits(text_field, label_field, user_field, args = args)
-    if args.pretrained_embed_words:
-        text_field.build_vocab(train_data, dev_data, test_data, vectors = args.custom_embed)
-        print(args.custom_embed)
-    else:
-        text_field.build_vocab(train_data, dev_data, test_data)
-    if args.pretrained_embed_users:
-        custom_embed_u = vocab.Vectors(name = 'sarcasm dataset/user_embeddings.txt', max_vectors = 8000)
-        user_field.build_vocab(train_data, dev_data, test_data, vectors =  custom_embed_u)
-    else:
-        user_field.build_vocab(train_data, dev_data, test_data)
-    label_field.build_vocab(train_data, dev_data, test_data)
-    # print(train_data)
-    # split valid and train (10%)
+#def mr(text_field, label_field, user_field, **kargs):
+#    train_data, dev_data, test_data = mydatasets.MR.splits(text_field, label_field, user_field, args = args)
+#    if args.pretrained_embed_words:
+#        text_field.build_vocab(train_data, dev_data, test_data, vectors = args.custom_embed)
+#        print(args.custom_embed)
+#    else:
+#        text_field.build_vocab(train_data, dev_data, test_data)
+#    if args.pretrained_embed_users:
+#        custom_embed_u = vocab.Vectors(name = args.emb_users, max_vectors = 8000)
+#        user_field.build_vocab(train_data, dev_data, test_data, vectors =  custom_embed_u)
+#    else:
+#        user_field.build_vocab(train_data, dev_data, test_data)
+#    label_field.build_vocab(train_data, dev_data, test_data)
+#    # print(train_data)
+#    # split valid and train (10%)
+#
+#    train_iter, dev_iter, test_iter = data.Iterator.splits(
+#                                (train_data, dev_data, test_data), 
+#                                batch_sizes=(batch_size, len(dev_data), len(test_data)),
+#                                **kargs)
+#    return train_iter, dev_iter, test_iter
 
-    train_iter, dev_iter, test_iter = data.Iterator.splits(
-                                (train_data, dev_data, test_data), 
-                                batch_sizes=(batch_size, len(dev_data), len(test_data)),
-                                **kargs)
-    return train_iter, dev_iter, test_iter
 
-
-with open('results_4.txt', 'w') as filehandle:
-    filehandle.writelines("CNN with not pretrained user embeddings and pretrained word embeddings\n")
+with open(args.output, 'w') as filehandle:
+    # filehandle.writelines("CNN with not pretrained user embeddings and pretrained word embeddings\n")
     # filehandle.writelines("%s " % attr for attr,_ in best_score.items())
     filehandle.writelines("Tr_acc ")
     filehandle.writelines("Val_acc ")
-    # filehandle.writelines(" ")
     filehandle.writelines("%s " % attr for attr,_ in p_list[0].items())    
 
     for i_dict in p_list[:100]:
@@ -99,8 +103,6 @@ with open('results_4.txt', 'w') as filehandle:
         embed_dim_users = 128
         kernel_num = int(i_dict['kernel_num'])
         kernel_sizes = i_dict['kernel_size']
-        # pretrained_embed_words = True
-        # pretrained_embed_users = True
         conv_layer = int(i_dict['conv_layer'])
         batch_size = 128
         # device
@@ -112,7 +114,7 @@ with open('results_4.txt', 'w') as filehandle:
         text_field = data.Field(lower=True)
         label_field = data.Field(sequential=False)
         user_field = data.Field()
-        train_iter, dev_iter, test_iter = mr(text_field, label_field, user_field, device='cpu', repeat=False)
+        train_iter,dev_iter,test_iter=dataloader(text_field,label_field,user_field,args,wdir=args.emb_words,u2vdir=args.emb_users,device='cpu',repeat=False)
         
         # update args and print
         words_vec = text_field.vocab.vectors

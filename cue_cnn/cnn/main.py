@@ -11,6 +11,7 @@ import train
 import mydatasets
 import pandas as pd
 import random
+from dataloader import dataloader
 
 
 parser = argparse.ArgumentParser(description='CNN text classificer')
@@ -33,8 +34,11 @@ parser.add_argument('-embed-dim', type=int, default=128, help='number of embeddi
 parser.add_argument('-kernel-num', type=int, default=60, help='number of each kind of kernel')
 parser.add_argument('-kernel-sizes', type=str, default='2,3,4,5,6,7', help='comma-separated kernel size to use for convolution')
 parser.add_argument('-static', action='store_true', default=False, help='fix the embedding')
-parser.add_argument('-pretrained-embed-words', type=bool, default=False, help='Use pre-trained embedding for words')
-parser.add_argument('-pretrained-embed-users', type=bool, default=True, help='Use pre-trained embedding for users')
+parser.add_argument('-data', type=str, default='Sarcasm/sarcasm dataset/experiment.csv', help='Dataset Directory')
+parser.add_argument('-pretrained-embed-words', type=bool, default=False, help='Use pre-trained embedding for words [default: False]')
+parser.add_argument('-pretrained-embed-users', type=bool, default=False, help='Use pre-trained embedding for users [default: False]')
+parser.add_argument('-emb-words', type=str, default='Sarcasm/sarcasm dataset/word_embeddings.txt' , help='Directory of pretrained word embeddings')
+parser.add_argument('-emb-users', type=str, default='sarcasm dataset/user_embeddings.txt', help='Directory of pretrained user embeddings')
 # device
 parser.add_argument('-device', type=int, default=-1, help='device to use for iterate data, -1 mean cpu [default: -1]')
 parser.add_argument('-no-cuda', action='store_true', default=False, help='disable the gpu')
@@ -47,44 +51,18 @@ parser.add_argument('-param-search', type=bool, default=False, help='Tuning hype
 parser.add_argument('-conv-layer', type=int, default=100, help='Hidden layer of the last convolution layer')
 args = parser.parse_args()
 
-# load Sarcasm dataset
-def mr(text_field, label_field, user_field, **kargs):
-    train_data, dev_data, test_data = mydatasets.MR.splits(text_field, label_field, user_field, args = args)
-    
-    if args.pretrained_embed_words:
-        text_field.build_vocab(train_data, dev_data, test_data, vectors = args.custom_embed)
-    else:
-        text_field.build_vocab(train_data, dev_data, test_data)
-    if args.pretrained_embed_users:
-        print(torch.sum(torch.sum(args.custom_embed_u.vectors,1)!=0))
-        custom_embed_u = vocab.Vectors(name = 'sarcasm dataset/user_embeddings.txt', max_vectors = 8000)
-        user_field.build_vocab(train_data, dev_data, test_data, vectors = custom_embed_u)
-    else:
-        user_field.build_vocab(train_data, dev_data, test_data)
-
-    label_field.build_vocab(train_data, dev_data, test_data)
-    # user_field.build_vocab(train_data, dev_data, test_data)
-    # split valid and train (10%)
-
-    train_iter, dev_iter, test_iter = data.Iterator.splits(
-                                (train_data, dev_data, test_data), 
-                                batch_sizes=(args.batch_size, len(dev_data), len(test_data)),
-                                **kargs)
-    return train_iter, dev_iter, test_iter
-
-
 # load data
 print("\nLoading data...")
 text_field = data.Field(lower=True)
 label_field = data.Field(sequential=False)
 user_field = data.Field(sequential=False)
-train_iter, dev_iter, test_iter = mr(text_field, label_field, user_field, device='cpu', repeat=False)
+train_iter, dev_iter, test_iter = dataloader(text_field,label_field,user_field,args,wdir=args.emb_words,u2vdir=args.emb_users,device='cpu',repeat=False)
 
 # update args and print
 words_vec = text_field.vocab.vectors
 users_vec = user_field.vocab.vectors
 # print(user_field.vocab.value)
-print(torch.sum(torch.sum(users_vec,1)!=0))
+#print(torch.sum(torch.sum(users_vec,1)!=0))
 args.embed_num = len(text_field.vocab)
 args.class_num = len(label_field.vocab) - 1
 args.embed_num_users = len(user_field.vocab)

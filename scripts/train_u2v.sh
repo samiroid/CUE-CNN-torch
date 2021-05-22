@@ -4,6 +4,7 @@ CORPUS=$BASE_PATH"/DATA/small_user_tweets.txt"
 OUTPUT_PATH=$BASE_PATH"/DATA/u2v/"
 
 python -m user2vec.u2v -input $CORPUS -emb $WORD_EMBEDDINGS -output $OUTPUT_PATH \
+                        -emb-encoding "Latin-1"\
                         -lr 0.001 \
                         -epochs 20 \
                         -neg_samples 2 \

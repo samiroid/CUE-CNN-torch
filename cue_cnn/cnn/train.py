@@ -38,14 +38,14 @@ def train(train_iter, dev_iter, model, cuda, epochs, lr, max_norm, log_interval,
             if steps % log_interval == 0:
                 corrects = (torch.max(logit, 1)[1].view(target.size()).data == target.data).sum()
                 accuracy = 100.0 * corrects/batch.batch_size
-                # if not (args.param_search):
-                # if True:
-                #     sys.stdout.write(
-                #         '\rBatch[{}] - loss: {:.6f}  acc: {:.4f}%({}/{})'.format(steps, 
-                #                                                                 loss.item(), 
-                #                                                                 accuracy.item(),
-                #                                                                 corrects.item(),
-                #                                                                 batch.batch_size))
+                if not (False):
+                    if True:
+                        sys.stdout.write(
+                            '\rBatch[{}] - loss: {:.6f}  acc: {:.4f}%({}/{})'.format(steps, 
+                                                                                    loss.item(), 
+                                                                                    accuracy.item(),
+                                                                                    corrects.item(),
+                                                                                    batch.batch_size))
             if steps % test_interval == 0:
                 dev_acc = eval(dev_iter, model, cuda)
                 if dev_acc > best_acc:
@@ -66,7 +66,7 @@ def train(train_iter, dev_iter, model, cuda, epochs, lr, max_norm, log_interval,
                 stop_epochs = stop_epochs + 1
                 # print("Early Stop batch")
                 break
-        if stop_epochs == 1:
+        if stop_epochs == 7:
             print("Early Stop")
             return tr_acc, best_acc, last_step
     return tr_acc, best_acc, last_step
@@ -91,12 +91,12 @@ def eval(data_iter, model, cuda):
     size = len(data_iter.dataset)
     avg_loss /= size
     accuracy = 100.0 * corrects/size
-    # if not args.param_search:
-    # if True:
-    #     print('\nEvaluation - loss: {:.6f}  acc: {:.4f}%({}/{}) \n'.format(avg_loss, 
-                                                                          # accuracy, 
-                                                                          # corrects, 
-                                                                          # size))
+    if not False:
+        if True:
+            print('\nEvaluation - loss: {:.6f}  acc: {:.4f}%({}/{}) \n'.format(avg_loss, 
+                                                                              accuracy, 
+                                                                              corrects, 
+                                                                              size))
     return accuracy
 
 

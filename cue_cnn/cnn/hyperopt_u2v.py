@@ -1,5 +1,4 @@
 b_dir = '/home/a.wrat/'
-# b_dir = ''
 
 import os
 import argparse
@@ -21,9 +20,13 @@ import numpy as np
 
 random.seed(42)
 
-parser = argparse.ArgumentParser(description='CNN hyper parameter tuning')
-parser.add_argument('-pretrained-embed-words', type=bool, default=True, help='Use pre-trained embedding for words')
-parser.add_argument('-pretrained-embed-users', type=bool, default=False, help='Use pre-trained embedding for users')
+parser = argparse.ArgumentParser(description='User2Vec (CNN) hyper parameter tuning')
+parser.add_argument('-output', type=str, default="output.txt", help='The directory for saving the results [default: output.txt]')
+parser.add_argument('-data', type=str, default='Sarcasm/sarcasm dataset/experiment.csv', help='Dataset Directory')
+parser.add_argument('-pretrained-embed-words', type=bool, default=False, help='Use pre-trained embedding for words [default: False]')
+parser.add_argument('-pretrained-embed-users', type=bool, default=True, help='Use pre-trained embedding for users [default: True]')
+parser.add_argument('-emb-words', type=str, default='Sarcasm/sarcasm dataset/word_embeddings.txt' , help='Directory of pretrained word embeddings')
+parser.add_argument('-emb-users-root', type=str, default='Sarcasm/OUTPUT/', help='Directory of pretrained user embeddings')
 parser.add_argument('-shuffle', action='store_true', default=False, help='shuffle the data every epoch')
 # model
 parser.add_argument('-static', action='store_true', default=False, help='fix the embedding')
@@ -38,15 +41,6 @@ parser.add_argument('-test', action='store_true', default=False, help='train or 
 parser.add_argument('-param-search', type=bool, default=True, help='Tuning hyper parameters')
 args = parser.parse_args()
 
-
-# p = {
-#       'lr': [0.001, 0.01],
-#       'dropout':[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6], 
-#       'max_norm':[0.003, 0.001, 0.0006, 0.0003, 0.0001],
-#       'kernel_num':np.linspace(40,100,61),
-#       'kernel_size':['2,3,4','5,6,7','8,9,10','11,12,13','14,15,16','2,4,6','3,5,7'],
-#       'conv_layer':np.linspace(50,200, 31)
-#       }
 hyp = {
       'lr': 0.001,
       'dropout':0.5, 
@@ -55,16 +49,19 @@ hyp = {
       'kernel_size':'5,6,7',
       'conv_layer':150
       }
-p_list = glob.glob(b_dir+'Sarcasm/OUTPUT/*')
+
+d = args.emb_users_root
+p_list = glob.glob(d)
+print(p_list)
 
 best_score = {'Train Accuracy': 0, 'Validation Accuracy': 0}
-with open(b_dir+'Sarcasm/results/u2v_param_tuning.txt', 'w') as filehandle:
+with open(args.output, 'w') as filehandle:
     filehandle.writelines("CNN with pretrained user embeddings \n")
     # filehandle.writelines("%s " % attr for attr,_ in best_score.items())
     filehandle.writelines("Tr_acc ")
     filehandle.writelines("Val_acc ")
     filehandle.writelines("lr margin min_word_freq min_docs_user neg_samples")    
-
+    f_best = p_list[0]
     for fname in p_list:        
         # learning
         lr = float(hyp['lr'])
@@ -83,8 +80,6 @@ with open(b_dir+'Sarcasm/results/u2v_param_tuning.txt', 'w') as filehandle:
         embed_dim_users = 128
         kernel_num = int(hyp['kernel_num'])
         kernel_sizes = hyp['kernel_size']
-        # pretrained_embed_words = True
-        # pretrained_embed_users = True
         conv_layer = int(hyp['conv_layer'])
         # device
         # data 
@@ -95,7 +90,7 @@ with open(b_dir+'Sarcasm/results/u2v_param_tuning.txt', 'w') as filehandle:
         text_field = data.Field(lower=True)
         label_field = data.Field(sequential=False)
         user_field = data.Field()
-        train_iter, dev_iter, test_iter = dataloader(text_field, label_field, user_field, args, u2vdir=fname+'/U.txt', device='cpu', repeat=False)
+        train_iter, dev_iter, test_iter = dataloader(text_field, label_field, user_field, args, wdir=args.emb_words, u2vdir=fname+'/U.txt', device='cpu', repeat=False)
         
         # update args and print
         words_vec = text_field.vocab.vectors

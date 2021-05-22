@@ -1,5 +1,4 @@
 b_dir = '/home/a.wrat/'
-# b_dir = ''
 import re
 import os
 import random
@@ -78,33 +77,14 @@ class MR(TarDataset):
 
         text_field.tokenize = lambda x: clean_str(x).split()
         fields = [('text', text_field), ('label', label_field),('user', user_field)]
-        # fields = [('label', label_field), ('text', text_field)]
 
         if examples is None:
             path = self.dirname if path is None else path
             examples = []
             
-            # f = pd.read_csv('data_twitter_sentiment/semeval_train.txt',sep='\t',names=["sentiment","tweet"])
-            f = pd.read_csv(b_dir+'Sarcasm/sarcasm dataset/experiment.csv')
-            # examples += [
-            #     data.Example.fromlist([b['tweet'], b['sentiment']], fields) for a,b in f.iterrows()]
-            # f = pd.read_csv('data_twitter_sentiment/Twitter2013_raw.txt',sep='\t',names=["sentiment","tweet"])
-            # examples += [
-            #     data.Example.fromlist([b['tweet'], b['sentiment']], fields) for a,b in f.iterrows()]
-            # print([b['tweet_text'] for _,b in f.iterrows])
+            f = pd.read_csv(args.data)
             examples += [
                 data.Example.fromlist([b['tweet_text'], b['sarcasm_score'], b['author_full_name']], fields) for a,b in f.iterrows()]
-                # print(args.custom_embed[3][1])
-            # examples += [
-            #     data.Example.fromlist([line, 'positive'], fields) for l in f]
-              # print(examples[0])
-            # with open(os.path.join(path, 'rt-polarity.neg'), errors='ignore') as f:
-            #     examples += [
-            #         data.Example.fromlist([line, 'negative'], fields) for line in f]
-            
-            # with open(os.path.join(path, 'rt-polarity.pos'), errors='ignore') as f:
-            #     examples += [
-            #         data.Example.fromlist([line, 'positive'], fields) for line in f]
         super(MR, self).__init__(examples, fields, **kwargs)
 
     @classmethod
@@ -130,9 +110,6 @@ class MR(TarDataset):
         test_index = int((1-test_ratio)*len(examples)) #0.8
         random.shuffle(examples[:test_index]) # shuffle train data before train - val split
         dev_index = int(0.8*len(examples[:test_index]))
-        # f = pd.read_csv('data_twitter_sentiment/semeval_train.txt',sep='\t',names=["sentiment","tweet"])
-        # dev_index = len(f)
-        # print(len(examples[:dev_index]))
 
         return (cls(text_field, label_field, user_field, examples=examples[:dev_index]),
                 cls(text_field, label_field, user_field, examples=examples[dev_index:test_index]),

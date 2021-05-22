@@ -1,30 +1,24 @@
-b_dir = '/home/a.wrat/'
-# b_dir = ''
 # load Sarcasm dataset
-# from _typeshed import NoneType
 import mydatasets
 import torch
 import torchtext.legacy.data as data
-# import torchtext.data as data
 from torchtext import vocab
 
 batch_size = 128
-def dataloader(text_field, label_field, user_field, args, u2vdir=None, **kargs):
+def dataloader(text_field, label_field, user_field, args, wdir=None, u2vdir=None, **kargs):
     train_data, dev_data, test_data = mydatasets.MR.splits(text_field, label_field, user_field, args = args)
     if args.pretrained_embed_words:
-        custom_embed = vocab.Vectors(name = b_dir+'Sarcasm/sarcasm dataset/word_embeddings.txt', max_vectors = 100000)
+        custom_embed = vocab.Vectors(name = wdir, max_vectors = 100000)
         text_field.build_vocab(train_data, dev_data, test_data, vectors = custom_embed)
         # print(args.custom_embed)
     else:
         text_field.build_vocab(train_data, dev_data, test_data)
     if args.pretrained_embed_users:
-        d = b_dir+'Sarcasm/sarcasm dataset/user_embeddings.txt' if u2vdir==None else u2vdir
-        custom_embed_u = vocab.Vectors(name = d, max_vectors = 8000)
-        user_field.build_vocab(train_data, dev_data, test_data, vectors =  custom_embed_u)
+        custom_embed_u = vocab.Vectors(name = u2vdir, max_vectors = 8000)
+        user_field.build_vocab(train_data, dev_data, test_data, vectors = custom_embed_u)
     else:
         user_field.build_vocab(train_data, dev_data, test_data)
     label_field.build_vocab(train_data, dev_data, test_data)
-    # print(train_data)
     # split valid and train (10%)
 
     train_iter, dev_iter, test_iter = data.Iterator.splits(
